@@ -78,6 +78,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'your-app-service-name'
+          app-name: 'messages-service'
           slot-name: 'Production'
           package: .
