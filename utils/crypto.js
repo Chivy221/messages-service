@@ -1,16 +1,14 @@
 const crypto = require('crypto');
-const key = process.env.ENCRYPTION_KEY;
+const secret = process.env.ENCRYPTION_KEY || 'default';
 
-module.exports.encrypt = (text) => {
-const cipher = crypto.createCipheriv('aes-128-cbc', key, key.slice(0, 16));
-let encrypted = cipher.update(text, 'utf8', 'hex');
-encrypted += cipher.final('hex');
-return encrypted;
-};
+function encrypt(text) {
+const cipher = crypto.createCipher('aes-256-ctr', secret);
+return cipher.update(text, 'utf8', 'hex') + cipher.final('hex');
+}
 
-module.exports.decrypt = (text) => {
-const decipher = crypto.createDecipheriv('aes-128-cbc', key, key.slice(0, 16));
-let decrypted = decipher.update(text, 'hex', 'utf8');
-decrypted += decipher.final('utf8');
-return decrypted;
-};
+function decrypt(hash) {
+const decipher = crypto.createDecipher('aes-256-ctr', secret);
+return decipher.update(hash, 'hex', 'utf8') + decipher.final('utf8');
+}
+
+module.exports = { encrypt, decrypt };
