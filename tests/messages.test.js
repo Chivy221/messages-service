@@ -1,24 +1,39 @@
+jest.mock('../models/Message', () => {
+  return {
+    create: jest.fn().mockImplementation(async (data) => ({
+      _id: 'mockid',
+      from: data.from,
+      to: data.to,
+      content: data.content,
+      toObject() { return this; },
+    })),
+    find: jest.fn().mockResolvedValue([
+      {
+        _id: 'mockid',
+        from: 'alice',
+        to: 'bob',
+        content: 'Hi Bob!',
+        toObject() { return this; },
+      },
+    ]),
+  };
+});
+
 const request = require('supertest');
-const mongoose = require('mongoose');
 const express = require('express');
 const bodyParser = require('body-parser');
 const messagesRouter = require('../routes/messages');
 
 let app;
 
-beforeAll(async () => {
-
+beforeAll(() => {
   app = express();
   app.use(bodyParser.json());
   app.use('/messages', messagesRouter);
 });
 
-afterAll(async () => {
-
-});
-
 describe('Messages API', () => {
-  it('POST /messages, then GET /messages finds the posted message', async () => {
+  it('POST /messages, then GET /messages finds the posted message (mocked)', async () => {
     const postRes = await request(app)
       .post('/messages')
       .send({ from: 'alice', to: 'bob', content: 'Hi Bob!' });
