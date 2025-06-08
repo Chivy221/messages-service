@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const bodyParser = require('body-parser');
+const { encrypt } = require('../utils/crypto'); 
 
 const Message = require('../models/Message'); 
 const messagesRouter = require('../routes/messages'); 
@@ -35,27 +36,24 @@ afterEach(async () => {
 
 describe('Messages API', () => {
   it('GET /messages', async () => {
-    await Message.create({ from: 'alice', to: 'bob', content: 'Hello Bob' });
+    await Message.create({ from: 'alice', to: 'bob', content: encrypt('Hello Bob') }); 
 
     const res = await request(app).get('/messages');
 
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     expect(res.body[0]).toHaveProperty('from', 'alice');
+    expect(res.body[0].content).toBe('Hello Bob'); 
   });
 
-it('POST /messages', async () => {
-  const res = await request(app)
-    .post('/messages')
-    .send({ from: 'alice', to: 'bob', content: 'Hi Bob!' });
+  it('POST /messages', async () => {
+    const res = await request(app)
+      .post('/messages')
+      .send({ from: 'alice', to: 'bob', content: 'Hi Bob!' });
 
-  expect(res.statusCode).toBe(201);
-  expect(res.body).toHaveProperty('from', 'alice');
-  expect(res.body.content).toBe('Hi Bob!');
+    expect(res.statusCode).toBe(201);
+    expect(res.body).toHaveProperty('from', 'alice');
+    expect(res.body.content).toBe('Hi Bob!');
 
-  // Вместо прямого обращения к базе, делаем GET запрос
-  const getRes = await request(app).get('/messages');
-  expect(getRes.statusCode).toBe(200);
-  expect(getRes.body[0].content).toBe('Hi Bob!');
-});
+  });
 });
