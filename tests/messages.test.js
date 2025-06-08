@@ -1,23 +1,17 @@
 const request = require('supertest');
-const express = require('express');
-const router = require('../routes/messages');
-
-const app = express();
-app.use(express.json());
-app.use('/messages', router);
-
+const app = require('../index'); // убедитесь, что index.js экспортирует app
 describe('Messages API', () => {
-it('should return 201 on POST', async () => {
-const res = await request(app).post('/messages').send({
-sender: 'Alice',
-recipient: 'Bob',
-content: 'Hello'
-});
-expect(res.statusCode).toBe(201);
-});
-
-it('should return 200 on GET', async () => {
+it('GET /messages → array', async () => {
 const res = await request(app).get('/messages');
 expect(res.statusCode).toBe(200);
+expect(Array.isArray(res.body)).toBe(true);
+});
+
+it('POST /messages → created', async () => {
+const res = await request(app)
+.post('/messages')
+.send({ sender: 'alice', receiver: 'bob', content: 'hello world' });
+expect(res.statusCode).toBe(201);
+expect(res.body.sender).toBe('alice');
 });
 });
