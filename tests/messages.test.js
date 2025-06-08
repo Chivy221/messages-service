@@ -18,18 +18,18 @@ jest.mock('../models/Message', () => ({
   ]),
 }));
 
-// Мокаем encrypt/decrypt
+// Мокаем encrypt/decrypt (из utils/crypto.js)
 jest.mock('../utils/crypto', () => ({
   encrypt: (str) => str,
   decrypt: (str) => str,
 }));
 
-// Мокаем cache
+// Мокаем cache (из utils/cache.js)
 jest.mock('../utils/cache', () => ({
   set: jest.fn(),
 }));
 
-// Мокаем sendLog
+// Мокаем sendLog (из utils/logger.js)
 jest.mock('../utils/logger', () => ({
   sendLog: jest.fn(),
 }));
