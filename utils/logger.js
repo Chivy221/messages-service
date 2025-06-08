@@ -1,15 +1,15 @@
-const fs = require('fs');
-const path = require('path');
-const logFile = path.join(__dirname, '..', 'logs.txt');
+const amqp = require('amqplib');
 
-function log(message) {
-const logLine = [${new Date().toISOString()}] ${message}\n;
-fs.appendFile(logFile, logLine, err => {
-if (err) console.error('Log write error', err);
-});
+async function sendLog(message) {
+try {
+const conn = await amqp.connect(process.env.RABBITMQ_URL);
+const ch = await conn.createChannel();
+await ch.assertQueue(process.env.LOG_QUEUE, { durable: false });
+ch.sendToQueue(process.env.LOG_QUEUE, Buffer.from(message));
+setTimeout(() => conn.close(), 500);
+} catch (e) {
+console.error('Log error:', e);
+}
 }
 
-module.exports = {
-info: log,
-error: log
-};
+module.exports = { sendLog };
