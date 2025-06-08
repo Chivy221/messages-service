@@ -20,7 +20,7 @@ useUnifiedTopology: true,
 }).then(() => {
 console.log('MongoDB connected');
 app.listen(process.env.PORT, () => {
-console.log(Messages service running on port ${process.env.PORT});
+  console.log(`Messages service running on port ${process.env.PORT}`);
 sendLog('Messages service started');
 consumeMessages();
 });
