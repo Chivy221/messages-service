@@ -4,9 +4,8 @@ const { MongoMemoryServer } = require('mongodb-memory-server');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-// Импорт модели и роутера
-const Message = require('../models/message'); // путь подгони под проект
-const messagesRouter = require('../routes/messages'); // путь подгони под проект
+const Message = require('../models/Message'); 
+const messagesRouter = require('../routes/messages'); 
 
 let mongoServer;
 let app;
