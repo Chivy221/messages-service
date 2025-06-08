@@ -2,8 +2,7 @@ name: Build and deploy Node.js app to Azure Web App - messages-service
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
   workflow_dispatch:
 
 jobs:
@@ -13,34 +12,28 @@ jobs:
       contents: read
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install OpenSSL 1.1 (for mongodb-memory-server)
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-          wget https://launchpadlibrarian.net/673948708/libssl1.1_1.1.1f-1ubuntu2.22_amd64.deb
-          sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2.22_amd64.deb
-
-      - name: Set up Node.js
+      - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
           node-version: '20.x'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install libssl1.1 on Ubuntu 24.04
+        run: |
+          wget -q http://archive.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.22_amd64.deb
+          sudo dpkg -i libssl1.1_1.1.1f-1ubuntu2.22_amd64.deb || sudo apt-get install -f -y
 
-      - name: Build project
-        run: npm run build --if-present
+      - name: npm install, build, test
+        run: |
+          npm install
+          npm run build --if-present
+          npm run test --if-present
 
-      - name: Run tests
-        run: npm test -- --detectOpenHandles
+      - name: Zip artifact for deployment
+        run: zip release.zip ./* -r
 
-      - name: Zip artifact
-        run: zip -r release.zip .
-
-      - name: Upload artifact
+      - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: node-app
@@ -51,28 +44,28 @@ jobs:
     needs: build
     environment:
       name: 'Production'
-      url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
+      url: ${{ stepsdeploy-to-webapp.outputs.webapp-url }}
     permissions:
       id-token: write
       contents: read
 
     steps:
-      - name: Download artifact
+      - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: node-app
 
-      - name: Unzip artifact
+      - name: Unzip artifact for deployment
         run: unzip release.zip
-
+      
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_6B1D7DDA88DC479E8F0BE308054DA69F }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_469AA5BDE18540C1B0CBB14136CFE0A6 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_0E42B0639B9044C3B48BAB8E53D72E4C }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy to Azure Web App
+      - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
