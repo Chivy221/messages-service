@@ -1,34 +1,40 @@
 const amqp = require('amqplib');
 const Message = require('../models/Message');
-const { encrypt } = require('../utils/crypto');
+const { encrypt } = require('../utils/encryption');
 const logger = require('../utils/logger');
+const cache = require('../utils/cache');
 
-module.exports = async function () {
-try {
-const conn = await amqp.connect(process.env.RABBITMQ_URL);
-const ch = await conn.createChannel();
 const queue = 'task_created';
-  await ch.assertQueue(queue, { durable: true });
-logger.info('Waiting for messages in', queue);
 
-ch.consume(queue, async (msg) => {
+async function connectRabbitMQ() {
+try {
+const connection = await amqp.connect(process.env.RABBITMQ_URL);
+const channel = await connection.createChannel();
+await channel.assertQueue(queue, { durable: true });
+  console.log(`🟢 [RabbitMQ] Waiting for messages in queue: ${queue}`);
+channel.consume(queue, async msg => {
   if (msg !== null) {
-    const content = JSON.parse(msg.content.toString());
-    logger.info('Received task message:', content);
+    const content = msg.content.toString();
+    const payload = JSON.parse(content);
+    logger.info(`Received task_created message: ${content}`);
 
-    // Save as notification message
-    const dbMessage = new Message({
-      sender: 'system',
-      recipient: content.assignedTo,
-      content: encrypt(`New task assigned: ${content.title}`)
-    });
+    const messageData = {
+      sender: 'task-system',
+      receiver: payload.assignedTo || 'unknown',
+      content: encrypt(`New task created: ${payload.title}`)
+    };
 
-    await dbMessage.save();
-    ch.ack(msg);
+    const message = new Message(messageData);
+    await message.save();
+    logger.info(`Message created in DB from task info`);
+
+    cache.del('messages');
+    channel.ack(msg);
   }
 });
-
   } catch (err) {
-logger.error('RabbitMQ Consumer Error:', err);
+console.error('[RabbitMQ] Error:', err);
 }
-};
+}
+
+module.exports = connectRabbitMQ;
