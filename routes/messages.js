@@ -12,7 +12,7 @@ const { from, to, content } = req.body;
 const encrypted = encrypt(content);
 const message = new Message({ from, to, content: encrypted });
 await message.save();
-cache.set(message:${message._id}, message);
+cache.set(`message:${message._id}`, message);
 sendLog(New message from ${from} to ${to});
 res.status(201).json({ ...message.toObject(), content });
 } catch (err) {
