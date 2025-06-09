@@ -1,8 +1,9 @@
-const mongoose = require('mongoose');
-const messageSchema = new mongoose.Schema({
-from: String,
-to: String,
-content: String,
-timestamp: { type: Date, default: Date.now },
+const { v4: uuidv4 } = require('uuid');
+
+const MessageSchema = new mongoose.Schema({
+  id: { type: String, default: uuidv4 }, // добавляем shard key
+  from: String,
+  to: String,
+  content: String,
+  createdAt: { type: Date, default: Date.now },
 });
-module.exports = mongoose.model('Message', messageSchema);
