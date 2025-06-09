@@ -1,40 +1,39 @@
-const amqp = require('amqplib');
-const Message = require('../models/Message');
-const { encrypt } = require('../utils/encryption');
-const logger = require('../utils/logger');
-const cache = require('../utils/cache');
+// ==== RABBITMQ FUNCTIONALITY DISABLED ====
 
-const queue = 'task_created';
+// const amqp = require('amqplib');
+// let rabbitChannel = null;
 
-async function connectRabbitMQ() {
-try {
-const connection = await amqp.connect(process.env.RABBITMQ_URL);
-const channel = await connection.createChannel();
-await channel.assertQueue(queue, { durable: true });
-  console.log(`🟢 [RabbitMQ] Waiting for messages in queue: ${queue}`);
-channel.consume(queue, async msg => {
-  if (msg !== null) {
-    const content = msg.content.toString();
-    const payload = JSON.parse(content);
-    logger.info(`Received task_created message: ${content}`);
+// // Инициализация RabbitMQ (отключено)
+// async function initRabbit() {
+//   try {
+//     const conn = await amqp.connect(process.env.RABBITMQ_URL);
+//     rabbitChannel = await conn.createChannel();
+//     await rabbitChannel.assertQueue('logs', { durable: false });
+//   } catch (err) {
+//     console.error('Log error:', err);
+//   }
+// }
 
-    const messageData = {
-      sender: 'task-system',
-      receiver: payload.assignedTo || 'unknown',
-      content: encrypt(`New task created: ${payload.title}`)
-    };
+// // Отправка лога в RabbitMQ (отключено)
+// function sendLog(message) {
+//   if (rabbitChannel) {
+//     rabbitChannel.sendToQueue('logs', Buffer.from(message));
+//   }
+// }
 
-    const message = new Message(messageData);
-    await message.save();
-    logger.info(`Message created in DB from task info`);
+// // Экспорт (отключено)
+// module.exports = { initRabbit, sendLog };
 
-    cache.del('messages');
-    channel.ack(msg);
-  }
-});
-  } catch (err) {
-console.error('[RabbitMQ] Error:', err);
-}
+// ==== STUBS FOR NO RABBITMQ ====
+
+// Пустая функция инициализации
+async function initRabbit() {
+  // RabbitMQ отключен
 }
 
-module.exports = connectRabbitMQ;
+// Пустая функция логирования
+function sendLog(message) {
+  // RabbitMQ logging disabled
+}
+
+module.exports = { initRabbit, sendLog };
