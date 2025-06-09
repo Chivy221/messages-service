@@ -1,15 +1,17 @@
-const amqp = require('amqplib');
+const fs = require('fs');
+const path = require('path');
+
+const logFile = path.join(__dirname, '../logs.txt');
 
 async function sendLog(message) {
-try {
-const conn = await amqp.connect(process.env.RABBITMQ_URL);
-const ch = await conn.createChannel();
-await ch.assertQueue(process.env.LOG_QUEUE, { durable: false });
-ch.sendToQueue(process.env.LOG_QUEUE, Buffer.from(message));
-setTimeout(() => conn.close(), 500);
-} catch (e) {
-console.error('Log error:', e);
-}
+  try {
+    const logEntry = `${new Date().toISOString()} ${message}\n`;
+    fs.appendFile(logFile, logEntry, err => {
+      if (err) console.error('Log error:', err);
+    });
+  } catch (e) {
+    console.error('Log error:', e);
+  }
 }
 
 module.exports = { sendLog };
