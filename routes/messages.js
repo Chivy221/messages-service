@@ -7,18 +7,20 @@ const { sendLog } = require('../utils/logger');
 const router = express.Router();
 
 router.post('/', async (req, res) => {
-try {
-const { from, to, content } = req.body;
-const encrypted = encrypt(content);
-const message = new Message({ from, to, content: encrypted });
-await message.save();
-cache.set(`message:${message._id}`, message);
-sendLog(`New message from ${from} to ${to}`);
-res.status(201).json({ ...message.toObject(), content });
-} catch (err) {
-res.status(500).json({ error: 'Error saving message' });
-}
+  try {
+    const { from, to, content } = req.body;
+    const encrypted = encrypt(content);
+    const message = new Message({ from, to, content: encrypted });
+    const saved = await message.save();
+    cache.set(`message:${saved._id}`, saved);
+    sendLog(`New message from ${from} to ${to}`);
+    res.status(201).json({ ...saved.toObject(), content });
+  } catch (err) {
+    console.error("❌ Failed to save message:", err);
+    res.status(500).json({ error: 'Error saving message', details: err.message });
+  }
 });
+
 
 router.get('/', async (_, res) => {
 try {
